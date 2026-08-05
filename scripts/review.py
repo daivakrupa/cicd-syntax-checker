@@ -12,10 +12,14 @@ IGNORE_FILES = [
 ]
 
 pipeline_files = []
+comments = []
+review_failed = False
 
+# Read changed files
 with open("changed_files.txt", "r") as f:
     changed_files = [line.strip() for line in f.readlines()]
 
+# Detect CI/CD files
 for file in changed_files:
 
     if file in IGNORE_FILES:
@@ -41,17 +45,21 @@ print("\nDetected CI/CD Files:")
 for file in pipeline_files:
     print(f" - {file}")
 
+# No pipeline files changed
 if not pipeline_files:
-    print("\nNo CI/CD files found.")
+
+    with open("review_results.md", "w") as f:
+        f.write("# 🤖 AI CI/CD Review\n\n")
+        f.write("No CI/CD files were modified in this PR.\n")
+
     sys.exit(0)
 
-review_failed = False
-
+# Review files
 for file in pipeline_files:
 
-    print(f"\n{'='*60}")
+    print("\n" + "=" * 60)
     print(f"Reviewing: {file}")
-    print(f"{'='*60}\n")
+    print("=" * 60)
 
     try:
 
@@ -105,7 +113,7 @@ File:
 
             except Exception as e:
 
-                print(f"Attempt {attempt + 1} failed: {str(e)}")
+                print(f"Attempt {attempt +1} failed: {str(e)}")
 
                 if attempt < 2:
                     time.sleep(10)
@@ -116,19 +124,59 @@ File:
 
         print(result)
 
+        comments.append(
+            f"""
+## 📄 `{file}`
+
+{result}
+
+---
+"""
+        )
+
         if "STATUS: FAIL" in result.upper():
             review_failed = True
 
     except Exception as e:
 
-        print(f"\nERROR reviewing {file}")
-        print(str(e))
+        error_msg = f"""
+## 📄 `{file}`
+
+STATUS: FAIL
+
+Issue:
+AI review execution failed.
+
+Fix:
+{str(e)}
+
+---
+"""
+
+        comments.append(error_msg)
 
         review_failed = True
 
+# Generate PR comment file
+with open("review_results.md", "w", encoding="utf-8") as f:
+
+    f.write("# 🤖 AI CI/CD Review Report\n\n")
+
+    if review_failed:
+        f.write("## ❌ Review Failed\n\n")
+    else:
+        f.write("## ✅ Review Passed\n\n")
+
+    for comment in comments:
+        f.write(comment)
+
+# Create flag file if failed
 if review_failed:
 
-    print("\n❌ CI/CD Review Failed")
-    sys.exit(1)
+    with open("review_failed.flag", "w") as f:
+        f.write("failed")
 
-print("\n✅ CI/CD Review Passed")
+    print("\n❌ CI/CD Review Failed")
+
+else:
+    print("\n✅ CI/CD Review Passed")
