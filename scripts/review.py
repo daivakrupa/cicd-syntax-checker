@@ -1,40 +1,31 @@
+from google import genai
 import os
-import google.generativeai as genai
 
-genai.configure(
+client = genai.Client(
     api_key=os.environ["GEMINI_API_KEY"]
 )
 
-model = genai.GenerativeModel("gemini-2.5-flash")
-
-with open(".github/workflows/deploy.yml", "r") as f:
+with open(".github/workflows/deploy.yml") as f:
     pipeline = f.read()
 
 prompt = f"""
-You are a CI/CD reviewer.
-
-Review this pipeline.
+Review this CI/CD pipeline.
 
 Check:
 1. Syntax issues
 2. Invalid keywords
-3. YAML indentation issues
+3. YAML formatting
 
-Return only:
-
-PASS
-
-or
-
-FAIL
-
-with explanation.
+Return PASS or FAIL.
 
 Pipeline:
 
 {pipeline}
 """
 
-response = model.generate_content(prompt)
+response = client.models.generate_content(
+    model="gemini-1.5-flash",
+    contents=prompt
+)
 
 print(response.text)
