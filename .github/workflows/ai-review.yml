@@ -1,4 +1,4 @@
-name: AI Pipeline Review
+name: AI CI/CD Reviewer
 
 on:
   pull_request:
@@ -8,15 +8,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install Gemini SDK
+      - name: Install Dependencies
         run: |
           pip install google-genai
+
+      - name: Get Changed Files
+        run: |
+          git fetch origin ${{ github.base_ref }}
+
+          git diff --name-only origin/${{ github.base_ref }}...HEAD > changed_files.txt
+
+          echo "Changed files:"
+          cat changed_files.txt
 
       - name: Run AI Review
         env:
