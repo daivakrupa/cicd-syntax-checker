@@ -1,0 +1,11 @@
+name: Deploy
+
+on:
+  push
+
+jobs:
+  build:
+    runson: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
