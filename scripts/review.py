@@ -1,9 +1,11 @@
-from openai import OpenAI
 import os
+import google.generativeai as genai
 
-client = OpenAI(
-    api_key=os.environ["OPENAI_API_KEY"]
+genai.configure(
+    api_key=os.environ["GEMINI_API_KEY"]
 )
+
+model = genai.GenerativeModel("gemini-2.5-flash")
 
 with open(".github/workflows/deploy.yml", "r") as f:
     pipeline = f.read()
@@ -16,15 +18,16 @@ Review this pipeline.
 Check:
 1. Syntax issues
 2. Invalid keywords
-3. YAML mistakes
+3. YAML indentation issues
 
-Return ONLY:
+Return only:
 
 PASS
 
 or
 
 FAIL
+
 with explanation.
 
 Pipeline:
@@ -32,11 +35,6 @@ Pipeline:
 {pipeline}
 """
 
-response = client.chat.completions.create(
-    model="gpt-4.1-mini",
-    messages=[
-        {"role": "user", "content": prompt}
-    ]
-)
+response = model.generate_content(prompt)
 
-print(response.choices[0].message.content)
+print(response.text)
