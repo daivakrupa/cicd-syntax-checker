@@ -16,7 +16,7 @@ jobs:
 
       - name: Install Gemini SDK
         run: |
-          pip install google-generativeai
+          pip install google-genai
 
       - name: Run AI Review
         env:
